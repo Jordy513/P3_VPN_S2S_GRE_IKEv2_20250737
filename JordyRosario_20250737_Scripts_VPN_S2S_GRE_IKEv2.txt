@@ -1,0 +1,160 @@
+! ══════════════════════════════════════════════════════
+! R1 — Site A | GRE over IPSec con IKEv2
+! Jordy Rosario — 20250737 | Seguridad de Redes 2026-C-2
+! ══════════════════════════════════════════════════════
+
+hostname R1
+
+! ─── Interfaces físicas ────────────────────────────────
+interface Ethernet0/0
+ description WAN-hacia-ISP
+ ip address 192.168.1.10 255.255.255.0
+ no shutdown
+
+interface Ethernet0/1
+ description LAN-SiteA
+ ip address 20.25.37.129 255.255.255.128
+ no shutdown
+
+! ─── Ruta por defecto hacia Internet (ISP) ─────────────
+ip route 0.0.0.0 0.0.0.0 192.168.1.2
+
+! ══════════════════════════════════════════════════════
+! BLOQUE IKEv2
+! ══════════════════════════════════════════════════════
+
+! ─── PASO 1: IKEv2 Proposal ────────────────────────────
+! NOTA: no incluir "prf sha256" — no soportado en IOSv.
+crypto ikev2 proposal PROP_IKEv2_GRE
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+
+! ─── PASO 2: IKEv2 Policy ──────────────────────────────
+crypto ikev2 policy POL_IKEv2_GRE
+ proposal PROP_IKEv2_GRE
+
+! ─── PASO 3: IKEv2 Keyring ─────────────────────────────
+crypto ikev2 keyring KR_SITEB_GRE
+ peer R2_SITEB
+  address 192.168.1.20
+  pre-shared-key local  JordyITLA2026!
+  pre-shared-key remote JordyITLA2026!
+
+! ─── PASO 4: IKEv2 Profile ─────────────────────────────
+crypto ikev2 profile PROF_IKEv2_GRE
+ match identity remote address 192.168.1.20 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local KR_SITEB_GRE
+
+! ══════════════════════════════════════════════════════
+! BLOQUE IPSEC — protege el GRE en modo TRANSPORTE
+! ══════════════════════════════════════════════════════
+
+! ─── PASO 5: Transform Set en modo TRANSPORTE ──────────
+! Diferencia clave vs VTI nativa: aquí es "transport",
+! no "tunnel", porque GRE ya hace su propia encapsulación.
+crypto ipsec transform-set TS_GRE_V2 esp-aes 256 esp-sha256-hmac
+ mode transport
+
+! ─── PASO 6: IPSec Profile ─────────────────────────────
+crypto ipsec profile GRE_IPSEC_PROFILE_V2
+ set transform-set TS_GRE_V2
+ set ikev2-profile PROF_IKEv2_GRE
+ set security-association lifetime seconds 3600
+
+! ─── PASO 7: Interfaz de Túnel GRE protegida por IPSec ─
+! tunnel mode permanece GRE (no "ipsec ipv4").
+! tunnel protection agrega el cifrado IKEv2/IPSec encima.
+interface Tunnel0
+ description GRE-over-IPSec-IKEv2-hacia-R2
+ ip address 10.25.37.1 255.255.255.252
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+ tunnel source Ethernet0/0
+ tunnel destination 192.168.1.20
+ tunnel mode gre ip
+ tunnel protection ipsec profile GRE_IPSEC_PROFILE_V2
+ no shutdown
+
+! ─── PASO 8: OSPF sobre el túnel GRE ───────────────────
+! GRE transporta el multicast de OSPF de forma nativa,
+! incluso con IPSec protegiendo el túnel.
+router ospf 1
+ network 20.25.37.128 0.0.0.127 area 0    ! LAN local Site A
+ network 10.25.37.0 0.0.0.3 area 0        ! Subred del túnel GRE
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+! ══════════════════════════════════════════════════════
+! R2 — Site B | GRE over IPSec con IKEv2
+! Jordy Rosario — 20250737 | Seguridad de Redes 2026-C-2
+! ══════════════════════════════════════════════════════
+
+hostname R2
+
+! ─── Interfaces físicas ────────────────────────────────
+interface Ethernet0/0
+ description WAN-hacia-ISP
+ ip address 192.168.1.20 255.255.255.0
+ no shutdown
+
+interface Ethernet0/1
+ description LAN-SiteB
+ ip address 20.25.37.1 255.255.255.128
+ no shutdown
+
+! ─── Ruta por defecto hacia Internet (ISP) ─────────────
+ip route 0.0.0.0 0.0.0.0 192.168.1.2
+
+! ─── PASO 1: IKEv2 Proposal ────────────────────────────
+crypto ikev2 proposal PROP_IKEv2_GRE
+ encryption aes-cbc-256
+ integrity sha256
+ group 14
+
+! ─── PASO 2: IKEv2 Policy ──────────────────────────────
+crypto ikev2 policy POL_IKEv2_GRE
+ proposal PROP_IKEv2_GRE
+
+! ─── PASO 3: IKEv2 Keyring ─────────────────────────────
+crypto ikev2 keyring KR_SITEA_GRE
+ peer R1_SITEA
+  address 192.168.1.10
+  pre-shared-key local  JordyITLA2026!
+  pre-shared-key remote JordyITLA2026!
+
+! ─── PASO 4: IKEv2 Profile ─────────────────────────────
+crypto ikev2 profile PROF_IKEv2_GRE
+ match identity remote address 192.168.1.10 255.255.255.255
+ authentication local pre-share
+ authentication remote pre-share
+ keyring local KR_SITEA_GRE
+
+! ─── PASO 5: Transform Set en modo TRANSPORTE ──────────
+crypto ipsec transform-set TS_GRE_V2 esp-aes 256 esp-sha256-hmac
+ mode transport
+
+! ─── PASO 6: IPSec Profile ─────────────────────────────
+crypto ipsec profile GRE_IPSEC_PROFILE_V2
+ set transform-set TS_GRE_V2
+ set ikev2-profile PROF_IKEv2_GRE
+ set security-association lifetime seconds 3600
+
+! ─── PASO 7: Interfaz de Túnel GRE protegida por IPSec ─
+interface Tunnel0
+ description GRE-over-IPSec-IKEv2-hacia-R1
+ ip address 10.25.37.2 255.255.255.252
+ ip mtu 1400
+ ip tcp adjust-mss 1360
+ tunnel source Ethernet0/0
+ tunnel destination 192.168.1.10
+ tunnel mode gre ip
+ tunnel protection ipsec profile GRE_IPSEC_PROFILE_V2
+ no shutdown
+
+! ─── PASO 8: OSPF sobre el túnel GRE ───────────────────
+router ospf 1
+ network 20.25.37.0 0.0.0.127 area 0      ! LAN local Site B
+ network 10.25.37.0 0.0.0.3 area 0        ! Subred del túnel GRE
