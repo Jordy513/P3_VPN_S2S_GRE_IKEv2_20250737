@@ -384,19 +384,7 @@ ip 20.25.37.3 255.255.255.128 20.25.37.1
 
 ## 5. Verificación del Túnel
 
-### 5.1 Disparar la negociación IKEv2 (paso obligatorio)
-
-> ⚠️ **IKEv2 es lazy por defecto** — al igual que en los laboratorios IKEv2 anteriores, el túnel no se negocia al aplicar la configuración. La SA se crea cuando hay tráfico que atraviesa la interfaz `Tunnel0`.
-
-```cisco
-R1# ping 20.25.37.2 source 20.25.37.129 repeat 5
-```
-
-> Si el `tunnel protection` aún no terminó de aplicarse y el ping falla en los primeros intentos, repetir el comando — la negociación IKEv2 toma unos segundos en completarse.
-
----
-
-### 5.2 Verificar el estado de la interfaz Tunnel0
+### 5.1 Verificar el estado de la interfaz Tunnel0
 
 ```cisco
 R1# show interface Tunnel0
@@ -421,7 +409,7 @@ Tunnel0 is up, line protocol is up
 
 ---
 
-### 5.3 Verificar el estado de la IKEv2 SA
+### 5.2 Verificar el estado de la IKEv2 SA
 
 ```cisco
 R1# show crypto ikev2 sa
@@ -442,7 +430,7 @@ Tunnel-id Local                 Remote                fvrf/ivrf            Statu
 
 ---
 
-### 5.4 Verificar las IPSec SAs (modo transporte)
+### 5.3 Verificar las IPSec SAs (modo transporte)
 
 ```cisco
 R1# show crypto ipsec sa
@@ -467,7 +455,7 @@ interface: Tunnel0
 
 ---
 
-### 5.5 Verificar la tabla de enrutamiento OSPF
+### 5.4 Verificar la tabla de enrutamiento OSPF
 
 ```cisco
 R1# show ip route ospf
@@ -482,7 +470,7 @@ O        20.25.37.0/25 [110/1001] via 10.25.37.2, 00:01:10, Tunnel0
 
 ---
 
-### 5.6 Verificar adyacencia OSPF sobre el túnel
+### 5.5 Verificar adyacencia OSPF sobre el túnel
 
 ```cisco
 R1# show ip ospf neighbor
@@ -499,7 +487,7 @@ Neighbor ID     Pri   State           Dead Time   Address         Interface
 
 ---
 
-### 5.7 Verificar conectividad extremo a extremo
+### 5.6 Verificar conectividad extremo a extremo
 
 Ejecutar desde **PC1** hacia **PC3**:
 
@@ -517,7 +505,7 @@ PC1> ping 20.25.37.2
 
 ---
 
-### 5.8 Tabla de comandos de verificación
+### 5.7 Tabla de comandos de verificación
 
 | Comando | Qué muestra |
 |---|---|
