@@ -602,7 +602,6 @@ Por eso en este laboratorio se mantiene `ip mtu 1400` (más conservador que los 
 * ✅ Reloj del sistema operativo visible evidenciando fecha y hora actual.
 * ✅ Rostro y voz del autor realizando la explicación técnica del laboratorio.
 * ✅ Demostración de los scripts de configuración aplicados en R1 y R2.
-* ✅ Ping extendido para disparar la negociación IKEv2 (`ping 20.25.37.2 source 20.25.37.129`).
 * ✅ Verificación de `show interface Tunnel0` mostrando `GRE/IP` + `Tunnel protection via IPSec`.
 * ✅ Verificación de `show crypto ikev2 sa` mostrando estado `READY`.
 * ✅ Verificación de `show crypto ipsec sa` mostrando protocolo `47` en los identifiers.
