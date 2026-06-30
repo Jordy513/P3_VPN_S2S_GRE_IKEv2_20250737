@@ -86,7 +86,7 @@ Esta es la diferencia de configuración más importante frente a la VTI nativa, 
 
 ### 2.3 GRE over IPSec vs. VTI nativa (IPSec puro)
 
-| Característica | GRE over IPSec (este lab) | VTI nativa — IPSec puro (lab anterior) |
+| Característica | GRE over IPSec (este lab) | VTI nativa — IPSec puro |
 |---|---|---|
 | **Modo del túnel** | `tunnel mode gre ip` | `tunnel mode ipsec ipv4` |
 | **Modo del transform-set** | `mode transport` | `mode tunnel` |
