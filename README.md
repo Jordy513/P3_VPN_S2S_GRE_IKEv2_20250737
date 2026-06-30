@@ -592,7 +592,7 @@ Por eso en este laboratorio se mantiene `ip mtu 1400` (más conservador que los 
 
 ## 8. Video Demostrativo
 
-🎥 **[Ver demostración en YouTube](#)**
+🎥 **[Ver demostración en YouTube](https://youtu.be/JWLoFn2iaDA)**
 
 **Duración:** máximo 8 minutos
 
